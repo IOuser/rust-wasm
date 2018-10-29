@@ -14,6 +14,7 @@ module.exports = {
         extensions: ['.ts', '.tsx', '.wasm', '.mjs', '.js', '.jsx', '.json'],
         alias: {
             'rust-lib': path.join(__dirname, './src/lib.rs'),
+            'rust-mem': path.join(__dirname, './target/wasm32-unknown-unknown/release/rust_wasm_tests_bg'),
         }
     },
     output: {
@@ -29,6 +30,13 @@ module.exports = {
                     loader: 'ts-loader',
                 },
             },
+            // TODO: Add worker loader static config
+            // {
+            //     test: /\.worker\.ts$/,
+            //     use: [
+            //         { loader: 'worker-loader' },
+            //     ],
+            // },
             {
                 test: /\.rs$/,
                 use: {

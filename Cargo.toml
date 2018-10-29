@@ -4,7 +4,6 @@ version = "0.0.1"
 authors = ["Ihor Yemets <ya.peren@yandex.ru>"]
 publish = false
 
-# remove/add rlib type
 [lib]
 crate-type = ["cdylib"]
 

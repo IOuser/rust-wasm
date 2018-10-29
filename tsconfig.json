@@ -3,7 +3,8 @@
         "target": "es5",
         "module": "esnext",
         "sourceMap": true,
-        // "allowJs": true,
+        "importHelpers": true,
+        "moduleResolution": "node",
         "lib": [
             "dom",
             "es2015"
@@ -12,6 +13,9 @@
         "paths": {
             "rust-lib": [
                 "./target/wasm32-unknown-unknown/release/rust_wasm_tests"
+            ],
+            "rust-mem": [
+                "./target/wasm32-unknown-unknown/release/rust_wasm_tests_bg"
             ]
         },
     }
