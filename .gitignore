@@ -1,3 +1,4 @@
 node_modules/
 public/code/
 target/
+.vscode/
