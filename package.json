@@ -19,7 +19,7 @@
   "scripts": {
     "start": "webpack-dev-server --progress",
     "build": "webpack --progress",
-    "setup": "rustup default nightly && rustup update nightly && rustup target add wasm32-unknown-unknown --toolchain nightly && cargo install --force --git https://github.com/alexcrichton/wasm-gc"
+    "setup": "rustup default nightly && rustup update nightly && rustup target add wasm32-unknown-unknown --toolchain nightly && cargo install --force --git https://github.com/alexcrichton/wasm-gc && cargo +nightly install wasm-bindgen-cli"
   },
   "dependencies": {
     "tslib": "^1.9.3"
