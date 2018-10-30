@@ -3,9 +3,10 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/IOuser/rust-wasm/master/splash.png" width="320" />
 </p>
+<p align="center">
+  Small demo with webgl, wasm (rust) and typescript.
+</p>
 
-Small demo with webgl, wasm (rust) and typescript.
-  
 ---
 
 ##### wasm
