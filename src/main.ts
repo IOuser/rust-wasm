@@ -51,7 +51,7 @@ const fps = new class {
 };
 
 
-const pointsCount = 100000;
+const pointsCount = 30000;
 
 (async () => {
     const { init } = await import('./lib');
@@ -85,8 +85,8 @@ const pointsCount = 100000;
     })
 
 
-    const w = 768;
-    const h = 512;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
 
     const particlesBox = ParticlesBox.new(w, h, pointsCount);
     particlesBox.tick(0);
@@ -130,7 +130,14 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
     const gl = canvas.getContext('webgl', { alpha: false, antialias: true });
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+
     gl.clearColor(0, 0, 0, 1);
+
+    gl.disable(gl.DEPTH_TEST);
+    // gl.disable(gl.CULL_FACE);
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
     gl.VERTEX_SHADER
     const [vert, frag] = await Promise.all([
