@@ -8,11 +8,6 @@
 //     worker.postMessage({ foo: 1 });
 // }, 1000);
 
-const CELL_SIZE = 5; // px
-const GRID_COLOR = "#CCCCCC";
-const DEAD_COLOR = "#FFFFFF";
-const ALIVE_COLOR = "#000000";
-
 
 const fps = new class {
     fps: HTMLPreElement = document.querySelector("pre");
@@ -56,13 +51,12 @@ const fps = new class {
 };
 
 
+const pointsCount = 100000;
+
 (async () => {
     const { init } = await import('./lib');
-    const { Universe, Cell, memory } = await init();
+    const { memory, ParticlesBox } = await init();
 
-    // console.time('rust');
-    // console.log(addOne(1, 2));
-    // console.timeEnd('rust');
 
     let frameId = null;
 
@@ -79,77 +73,138 @@ const fps = new class {
         }
     });
 
-    const universe = Universe.new();
-    const width = universe.width();
-    const height = universe.height();
-    const cellsPtr = universe.cells();
-    const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
+    window.addEventListener('click', (e: MouseEvent) => {
+        const { left, top } = canvas.getBoundingClientRect()
+
+        const x = e.clientX - left - canvas.width / 2;
+        const y = e.clientY - top - canvas.height / 2;
+
+        console.log(x, y);
+
+        particlesBox.trigger(x, -y)
+    })
+
+
+    const w = 768;
+    const h = 512;
+
+    const particlesBox = ParticlesBox.new(w, h, pointsCount);
+    particlesBox.tick(0);
+    const pointsPtr = particlesBox.particles();
+    const cells = new Float32Array(memory.buffer, pointsPtr, Math.floor(pointsCount * 4));
+    // console.log(cells);
 
     const canvas = document.querySelector<HTMLCanvasElement>('canvas');
     console.assert(canvas !== null);
+    canvas.width = w;
+    canvas.height = h;
 
-    canvas.height = (CELL_SIZE + 1) * height + 1;
-    canvas.width = (CELL_SIZE + 1) * width + 1;
+    const v = await initView(canvas);
+    console.log(v);
+    v.render(cells);
+    // const ctx = canvas.getContext('2d');
 
-    const ctx = canvas.getContext('2d');
-
+    let lastT = 0;
     const renderLoop = (t: number) => {
-        fps.render();
-        universe.tick();
+        // fps.render();
+        let dt = t - lastT;
+        if (dt > 64) {
+            dt = 64;
+        }
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawGrid();
-        drawCells();
+        particlesBox.tick(dt);
+        lastT = t;
+
+        v.render(cells);
 
         frameId = requestAnimationFrame(renderLoop);
     };
-    // frameId = requestAnimationFrame(renderLoop);
+})();
 
-    const drawGrid = () => {
-        ctx.beginPath();
-        ctx.strokeStyle = GRID_COLOR;
+interface View {
+    render(buffer: Float32Array): void;
+    resize(width: number, height: number): void;
+}
 
-        // Vertical lines.
-        for (let i = 0; i <= width; i++) {
-            ctx.moveTo(i * (CELL_SIZE + 1) + 1, 0);
-            ctx.lineTo(i * (CELL_SIZE + 1) + 1, (CELL_SIZE + 1) * height + 1);
+async function initView(canvas: HTMLCanvasElement): Promise<View> {
+    const gl = canvas.getContext('webgl', { alpha: false, antialias: true });
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.clearColor(0, 0, 0, 1);
+
+    gl.VERTEX_SHADER
+    const [vert, frag] = await Promise.all([
+        getShader('vert.glsl', gl, gl.VERTEX_SHADER),
+        getShader('frag.glsl', gl, gl.FRAGMENT_SHADER),
+    ])
+
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vert);
+    gl.attachShader(program, frag);
+    gl.linkProgram(program);
+
+    var numAttribs = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+    for (var ii = 0; ii < numAttribs; ++ii) {
+        var attribInfo = gl.getActiveAttrib(program, ii);
+        if (!attribInfo) {
+            break;
         }
+        console.log(gl.getAttribLocation(program, attribInfo.name), attribInfo.name);
+    }
 
-        // Horizontal lines.
-        for (let j = 0; j <= height; j++) {
-            ctx.moveTo(0, j * (CELL_SIZE + 1) + 1);
-            ctx.lineTo((CELL_SIZE + 1) * width + 1, j * (CELL_SIZE + 1) + 1);
-        }
+    return {
+        render: (buffer: Float32Array) => {
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.useProgram(program);
 
-        ctx.stroke();
-    };
+            {
+                const uniformLocation = gl.getUniformLocation(program, 'resolution');
+                gl.uniform2f(uniformLocation, canvas.width, canvas.height);
+            }
 
-    const getIndex = (row, column) => {
-        return row * width + column;
-    };
+            {
+                const attribLocation = gl.getAttribLocation(program, 'scale');
+                gl.disableVertexAttribArray(attribLocation);
+                gl.vertexAttrib2f(attribLocation, 2 / canvas.width, 2 / canvas.height);
+            }
 
-    const drawCells = () => {
-        ctx.beginPath();
-        ctx.fillStyle = ALIVE_COLOR;
-
-        for (let row = 0; row < height; row++) {
-            for (let col = 0; col < width; col++) {
-                const idx = getIndex(row, col);
-
-                if (cells[idx] === Cell.Dead) {
-                    continue;
-                }
-
-                ctx.rect(
-                    col * (CELL_SIZE + 1) + 1,
-                    row * (CELL_SIZE + 1) + 1,
-                    CELL_SIZE,
-                    CELL_SIZE
+            {
+                const attribLocation = gl.getAttribLocation(program, 'coord');
+                gl.enableVertexAttribArray(attribLocation);
+                gl.vertexAttribPointer(
+                    attribLocation, // index of attr
+                    2, // pick two values X and Y
+                    gl.FLOAT, // f32
+                    false, // normalized
+                    16, // stride (step in bytes)
+                    0, // start
                 );
             }
-        }
 
-        ctx.fill();
-        ctx.closePath();
-    };
-})();
+            gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.DYNAMIC_DRAW);
+            gl.drawArrays(gl.POINTS, 0, pointsCount);
+        },
+        resize: (width: number, height: number) => {
+            canvas.width = width;
+            canvas.height = height;
+            gl.viewport(0, 0, width, height);
+        }
+    }
+}
+
+type Flavour = WebGLRenderingContextBase['VERTEX_SHADER'] | WebGLRenderingContextBase['FRAGMENT_SHADER'];
+async function getShader(name: string, gl: WebGLRenderingContext, flavour: Flavour): Promise<WebGLShader> {
+    const source = (await import(`./shaders/${name}`)).default;
+
+    const shader = gl.createShader(flavour);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader)
+
+    console.groupCollapsed(name);
+    console.log(source);
+    console.log(gl.getShaderInfoLog(shader));
+    console.groupEnd();
+
+    return shader;
+}

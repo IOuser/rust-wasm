@@ -25,6 +25,10 @@ module.exports = {
         strictExportPresence: true,
         rules: [
             {
+                test: /\.glsl$/,
+                use: 'raw-loader',
+            },
+            {
                 test: /\.ts$/,
                 use: {
                     loader: 'ts-loader',

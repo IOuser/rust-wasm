@@ -7,6 +7,7 @@
   "devDependencies": {
     "@types/node": "^10.12.0",
     "@types/webassembly-js-api": "^0.0.1",
+    "raw-loader": "^0.5.1",
     "rust-native-wasm-loader": "^0.8.1",
     "ts-loader": "^5.2.2",
     "typescript": "^3.1.3",
