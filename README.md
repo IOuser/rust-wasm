@@ -1,6 +1,11 @@
 # rust-wasm
-Small demo with webgl, wasm (rust) and typescript.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/IOuser/rust-wasm/master/splash.png" width="320" />
+</p>
+
+Small demo with webgl, wasm (rust) and typescript.
+  
 ---
 
 ##### wasm
