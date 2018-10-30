@@ -25,3 +25,7 @@ $ yarn
 # run build
 $ yarn start
 ```
+
+##### TODO:
+- QuadTree (Point, AABB) rust impl
+- Circles colliding
