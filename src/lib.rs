@@ -4,7 +4,6 @@ extern crate wasm_bindgen;
 mod rust;
 
 use cfg_if::cfg_if;
-// use wasm_bindgen::prelude::*;
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -15,5 +14,3 @@ cfg_if! {
         static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
     }
 }
-
-// Utils

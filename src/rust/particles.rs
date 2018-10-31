@@ -1,5 +1,4 @@
 extern crate cfg_if;
-extern crate wasm_bindgen;
 
 use std::fmt;
 use wasm_bindgen::prelude::*;
@@ -112,6 +111,10 @@ impl ParticlesBox {
             if p.y > sub_height as f32 {
                 p.dy = -abs(p.dy);
             }
+
+            let k = 0.0001 * dt;
+            p.dx -= p.dx * k;
+            p.dy -= p.dy * k;
 
             p.dy -= 0.001 * dt;
         }
