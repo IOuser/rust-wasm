@@ -13,7 +13,7 @@ pub enum AABBSide {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy)]
 pub struct AABBDimensions {
     pub x: f32,
     pub y: f32,
@@ -49,27 +49,6 @@ impl AABB {
         }
     }
 
-    pub fn intersects(&self, _other: &AABB) -> bool {
-        // const aDims = this.fullDimensions();
-        // const bDims = aabb.fullDimensions();
-
-        // const aLeft = aDims.x;
-        // const aRight = aDims.x + aDims.width;
-        // const aTop = aDims.y;
-        // const aBottom = aDims.y + aDims.height;
-
-        // const bLeft = bDims.x;
-        // const bRight = bDims.x + bDims.width;
-        // const bTop = bDims.y;
-        // const bBottom = bDims.y + bDims.height;
-
-        // if (aLeft > bRight || aRight < bLeft || aTop > bBottom || aBottom < bTop) {
-        //     return false;
-        // }
-
-        false
-    }
-
     pub fn subdivide(&self, side: AABBSide) -> AABB {
         let x = self.center.x;
         let y = self.center.y;
@@ -87,5 +66,26 @@ impl AABB {
             AABBSide::SW => AABB::new(Point::new(x - quad_width, y + quad_height), half_size),
             AABBSide::SE => AABB::new(Point::new(x + quad_width, y + quad_height), half_size),
         }
+    }
+
+    pub fn intersects(&self, other: &AABB) -> bool {
+        let a_dims = self.dimensions;
+        let b_dims = other.dimensions;
+
+        let a_left = a_dims.x;
+        let a_right = a_dims.x + a_dims.width;
+        let a_top = a_dims.y;
+        let a_bottom = a_dims.y + a_dims.height;
+
+        let b_left = b_dims.x;
+        let b_right = b_dims.x + b_dims.width;
+        let b_top = b_dims.y;
+        let b_bottom = b_dims.y + b_dims.height;
+
+        if a_left > b_right || a_right < b_left || a_top > b_bottom || a_bottom < b_top {
+            return false;
+        }
+
+        true
     }
 }

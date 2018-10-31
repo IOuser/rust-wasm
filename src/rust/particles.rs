@@ -28,7 +28,7 @@ extern {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy)]
 pub struct Particle {
     x: f32,
     y: f32,
