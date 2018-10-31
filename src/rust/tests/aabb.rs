@@ -85,3 +85,25 @@ fn aabb_intersects() {
     let aabb10 = AABB::new(Point::new(3.0, -1.0), hs);
     assert!(aabb.intersects(&aabb10) == true);
 }
+
+#[test]
+fn aabb_contains() {
+    let aabb = AABB::new(Point::new(1.0, 1.0), HalfSize::new(1.0, 1.0));
+
+    // inside
+    assert!(aabb.contains(&Point::new(1.0, 1.0)) == true);
+    assert!(aabb.contains(&Point::new(0.5, 0.5)) == true);
+
+    // outside
+    assert!(aabb.contains(&Point::new(-1.0, -1.0)) == false);
+
+    // edge cases
+    assert!(aabb.contains(&Point::new(0.0, 3.0)) == false);
+    assert!(aabb.contains(&Point::new(0.0, 2.0)) == true);
+    assert!(aabb.contains(&Point::new(0.0, 1.0)) == true);
+    assert!(aabb.contains(&Point::new(0.0, 0.0)) == true);
+    assert!(aabb.contains(&Point::new(3.0, 0.0)) == false);
+    assert!(aabb.contains(&Point::new(2.0, 0.0)) == true);
+    assert!(aabb.contains(&Point::new(1.0, 0.0)) == true);
+    assert!(aabb.contains(&Point::new(0.0, 0.0)) == true);
+}

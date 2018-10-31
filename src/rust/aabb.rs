@@ -88,4 +88,13 @@ impl AABB {
 
         true
     }
+
+    pub fn contains(&self, point: &Point) -> bool {
+        let left = self.dimensions.x;
+        let right = self.dimensions.x + self.dimensions.width;
+        let top = self.dimensions.y;
+        let bottom = self.dimensions.y + self.dimensions.height;
+
+        return !(point.x < left || point.x > right || point.y < top || point.y > bottom)
+    }
 }
