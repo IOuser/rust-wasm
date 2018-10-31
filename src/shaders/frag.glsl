@@ -31,7 +31,7 @@ void main() {
         vec4(gl_FragCoord.xy / resolution.xy, 1.0, 0.25),
         vec4(gl_FragCoord.xy / resolution.xy * 0.25, 0.25, 0.25),
         clamp((innerRadius - d) * blurFactor, 0.5, 1.0)
-    ) * clamp((outerRadius - d) * blurFactor, 0.0, 0.5);
+    ) * clamp((outerRadius - d) * blurFactor, 0.0, 0.5) * 1.2;
 
     // if (d < 5.0) {
     //     float v = size / 15.0;

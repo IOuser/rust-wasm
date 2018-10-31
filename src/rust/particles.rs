@@ -112,11 +112,11 @@ impl ParticlesBox {
                 p.dy = -abs(p.dy);
             }
 
-            let k = 0.0001 * dt;
+            let k = 0.0007 * dt;
             p.dx -= p.dx * k;
             p.dy -= p.dy * k;
 
-            p.dy -= 0.001 * dt;
+            // p.dy -= 0.001 * dt;
         }
     }
 
@@ -131,7 +131,8 @@ impl ParticlesBox {
             p.x = x;
             p.y = y;
 
-            let amp = sqrt(random() * 0.5 - 0.25) * 0.5;
+            // https://www.wolframalpha.com/input/?i=plot+sqrt(x+*+0.6+-+0.3)+*+0.5,++0+%3C+x+%3C+1
+            let amp = sqrt(random() * 0.6 - 0.25) * 0.5;
             let vec = random() * 2.0 * 3.14;
             p.dx = sin(vec) * amp;
             p.dy = cos(vec) * amp;
