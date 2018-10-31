@@ -144,9 +144,11 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
     gl.VERTEX_SHADER
-    const [vert, frag] = await Promise.all([
+    const [vert, frag, vert2, frag2] = await Promise.all([
         getShader('vert.glsl', gl, gl.VERTEX_SHADER),
         getShader('frag.glsl', gl, gl.FRAGMENT_SHADER),
+        getShader('vert-2.glsl', gl, gl.VERTEX_SHADER),
+        getShader('frag-2.glsl', gl, gl.FRAGMENT_SHADER),
     ])
 
 
@@ -162,6 +164,20 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
             break;
         }
         console.log(gl.getAttribLocation(program, attribInfo.name), attribInfo.name);
+    }
+
+    const program2 = gl.createProgram();
+    gl.attachShader(program2, vert2);
+    gl.attachShader(program2, frag2);
+    gl.linkProgram(program2);
+
+    var numAttribs = gl.getProgramParameter(program2, gl.ACTIVE_ATTRIBUTES);
+    for (var ii = 0; ii < numAttribs; ++ii) {
+        var attribInfo = gl.getActiveAttrib(program2, ii);
+        if (!attribInfo) {
+            break;
+        }
+        console.log(gl.getAttribLocation(program2, attribInfo.name), attribInfo.name);
     }
 
     return {
@@ -195,6 +211,40 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
 
             gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.DYNAMIC_DRAW);
             gl.drawArrays(gl.POINTS, 0, pointsCount);
+
+            // draw lines
+            gl.useProgram(program2);
+
+            {
+                const attribLocation = gl.getAttribLocation(program2, 'scale');
+                gl.disableVertexAttribArray(attribLocation);
+                gl.vertexAttrib2f(attribLocation, 2 / canvas.width, 2 / canvas.height);
+            }
+
+            {
+                const attribLocation = gl.getAttribLocation(program2, 'coord');
+                gl.enableVertexAttribArray(attribLocation);
+                gl.vertexAttribPointer(
+                    attribLocation, // index of attr
+                    2, // pick two values X and Y
+                    gl.FLOAT, // f32
+                    false, // normalized
+                    8, // stride (step in bytes)
+                    0, // start
+                );
+            }
+
+            gl.bufferData(
+                gl.ARRAY_BUFFER,
+                new Float32Array([
+                    -100, 100, 100, 100,
+                    -100, -100, 100, -100,
+                    100, 100, 100, -100,
+                    -100, 100, -100, -100,
+                ]),
+                gl.STATIC_DRAW
+            );
+            gl.drawArrays(gl.LINES, 0, 8);
         },
         resize: (width: number, height: number) => {
             canvas.width = width;
