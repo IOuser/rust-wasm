@@ -8,7 +8,7 @@ varying float size;
 void main() {
     float innerRadius = 3.0;
     float outerRadius = 5.0;
-    float blurFactor = 0.75;
+    float blurFactor = 0.275;
 
     // gl_FragColor = vec4(
     //     // gl_FragCoord.xy / resolution.xy, resolution.y / gl_FragCoord.x + 0.1, 0.2
