@@ -51,7 +51,7 @@
 // };
 
 
-const pointsCount = 30000;
+const pointsCount = 1000;
 
 (async () => {
     const { init } = await import('./lib');
