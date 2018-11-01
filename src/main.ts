@@ -51,7 +51,7 @@
 // };
 
 
-const pointsCount = 50000;
+const pointsCount = 30000;
 
 (async () => {
     const { init } = await import('./lib');
@@ -194,6 +194,20 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
                 const attribLocation = gl.getAttribLocation(program, 'scale');
                 gl.disableVertexAttribArray(attribLocation);
                 gl.vertexAttrib2f(attribLocation, 2 / canvas.width, 2 / canvas.height);
+            }
+
+            {
+                const attribLocation = gl.getAttribLocation(program, 'velocity');
+                gl.enableVertexAttribArray(attribLocation);
+                gl.vertexAttribPointer(
+                    attribLocation, // index of attr
+                    2, // pick two values X and Y
+                    gl.FLOAT, // f32
+                    false, // normalized
+                    16, // stride (step in bytes)
+                    // dx, dy
+                    8, // start
+                );
             }
 
             {
