@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+use std::fmt;
+
 #[wasm_bindgen]
 #[derive(Clone, Copy)]
 pub struct Point {
@@ -20,5 +22,13 @@ impl Point {
         let diff_x = point.x - self.x;
         let diff_y = point.y - self.y;
         (diff_x.powi(2) + diff_y.powi(2)).sqrt()
+    }
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[x: {}, y: {}]", self.x, self.y)?;
+
+        Ok(())
     }
 }
