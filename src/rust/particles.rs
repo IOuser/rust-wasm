@@ -12,20 +12,20 @@ extern {
     #[wasm_bindgen(js_namespace = Math)]
     fn random() -> f32;
 
-    #[wasm_bindgen(js_namespace = Math)]
-    fn abs(v: f32) -> f32;
+    // #[wasm_bindgen(js_namespace = Math)]
+    // fn abs(v: f32) -> f32;
 
-    #[wasm_bindgen(js_namespace = Math)]
-    fn sin(v: f32) -> f32;
+    // #[wasm_bindgen(js_namespace = Math)]
+    // fn sin(v: f32) -> f32;
 
-    #[wasm_bindgen(js_namespace = Math)]
-    fn cos(v: f32) -> f32;
+    // #[wasm_bindgen(js_namespace = Math)]
+    // fn cos(v: f32) -> f32;
 
-    #[wasm_bindgen(js_namespace = Math)]
-    fn sqrt(v: f32) -> f32;
+    // #[wasm_bindgen(js_namespace = Math)]
+    // fn sqrt(v: f32) -> f32;
 
-    #[wasm_bindgen(js_namespace = Math)]
-    fn floor(v: f32) -> f32;
+    // #[wasm_bindgen(js_namespace = Math)]
+    // fn floor(v: f32) -> f32;
 
     #[wasm_bindgen(js_namespace = console)]
     fn log(name: &str);
@@ -110,19 +110,19 @@ impl ParticlesBox {
             p.y += p.dy * dt;
 
             if p.x < -sub_width {
-                p.dx = abs(p.dx);
+                p.dx = p.dx.abs();
             }
 
             if p.x > sub_width as f32 {
-                p.dx = -abs(p.dx);
+                p.dx = -p.dx.abs();
             }
 
             if p.y < -sub_height {
-                p.dy = abs(p.dy);
+                p.dy = p.dy.abs();
             }
 
             if p.y > sub_height as f32 {
-                p.dy = -abs(p.dy);
+                p.dy = -p.dy.abs();
             }
 
             let k = 0.0007 * dt;
@@ -131,10 +131,10 @@ impl ParticlesBox {
 
 
             // https://www.wolframalpha.com/input/?i=plot+sqrt(x+*+0.4+%2B+0.1))+*+0.5,++0+%3C+x+%3C+1
-            let amp = sqrt(random() * 0.3 + 0.1) * 0.5 - 0.3;
+            let amp = (random() * 0.3 + 0.1).sqrt() * 0.5 - 0.3;
             let vec = random() * 2.0 * 3.14;
-            p.dx += sin(vec) * amp * 0.003 * dt;
-            p.dy += cos(vec) * amp * 0.003 * dt;
+            p.dx += vec.sin() * amp * 0.003 * dt;
+            p.dy += vec.cos() * amp * 0.003 * dt;
 
 
             // p.dy -= 0.0001 * dt;
@@ -153,10 +153,10 @@ impl ParticlesBox {
             p.x = x;
             p.y = y;
 
-            let amp = sqrt(random() * 0.35) * 0.5;
+            let amp = (random() * 0.35).sqrt() * 0.5;
             let vec = random() * 2.0 * 3.14;
-            p.dx = sin(vec) * amp;
-            p.dy = cos(vec) * amp;
+            p.dx = vec.sin() * amp;
+            p.dy = vec.cos() * amp;
         }
     }
 }
