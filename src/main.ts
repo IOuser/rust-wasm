@@ -1,3 +1,8 @@
+import { QuadTree } from './utils/quad-tree';
+import { AABB } from './utils/aabb';
+import { Point } from './utils/point';
+import { getProgram } from './utils/shader';
+
 // import Worker from 'worker-loader!./worker/worker';
 // const worker = new Worker();
 // worker.addEventListener("message", (event) => {
@@ -8,50 +13,7 @@
 //     worker.postMessage({ foo: 1 });
 // }, 1000);
 
-
-// const fps = new class {
-//     fps: HTMLPreElement = document.querySelector("pre");
-//     frames: number[] = [];
-//     lastFrameTimeStamp = performance.now();
-
-//     render() {
-//         // Convert the delta time since the last frame render into a measure
-//         // of frames per second.
-//         const now = performance.now();
-//         const delta = now - this.lastFrameTimeStamp;
-//         this.lastFrameTimeStamp = now;
-//         const fps = 1 / delta * 1000;
-
-//         // Save only the latest 100 timings.
-//         this.frames.push(fps);
-//         if (this.frames.length > 100) {
-//             this.frames.shift();
-//         }
-
-//         // Find the max, min, and mean of our 100 latest timings.
-//         let min = Infinity;
-//         let max = -Infinity;
-//         let sum = 0;
-//         for (let i = 0; i < this.frames.length; i++) {
-//             sum += this.frames[i];
-//             min = Math.min(this.frames[i], min);
-//             max = Math.max(this.frames[i], max);
-//         }
-//         let mean = sum / this.frames.length;
-
-//         // Render the statistics.
-//         this.fps.textContent = `
-//   Frames per Second:
-//            latest = ${Math.round(fps)}
-//   avg of last 100 = ${Math.round(mean)}
-//   min of last 100 = ${Math.round(min)}
-//   max of last 100 = ${Math.round(max)}
-//   `.trim();
-//     }
-// };
-
-
-const pointsCount = 50000;
+const pointsCount = 10000;
 
 (async () => {
     const { init } = await import('./lib');
@@ -90,9 +52,10 @@ const pointsCount = 50000;
 
     const particlesBox = ParticlesBox.new(w, h, pointsCount);
     particlesBox.tick(0);
+
+    // convert raw pointer to Float32Array;
     const pointsPtr = particlesBox.particles();
     const cells = new Float32Array(memory.buffer, pointsPtr, Math.floor(pointsCount * 4));
-    // console.log(cells);
 
     const canvas = document.querySelector<HTMLCanvasElement>('canvas');
     console.assert(canvas !== null);
@@ -143,45 +106,58 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-    gl.VERTEX_SHADER
-    const [vert, frag] = await Promise.all([
-        getShader('vert.glsl', gl, gl.VERTEX_SHADER),
-        getShader('frag.glsl', gl, gl.FRAGMENT_SHADER),
+
+    const particlesProgram = await getProgram(gl, 'particles shader', [
+        ['particles.v.glsl', gl.VERTEX_SHADER],
+        ['particles.f.glsl', gl.FRAGMENT_SHADER],
+    ])
+    const gridProgram = await getProgram(gl, 'grid shader', [
+        ['grid.v.glsl', gl.VERTEX_SHADER],
+        ['grid.f.glsl', gl.FRAGMENT_SHADER],
     ])
 
 
-    const program = gl.createProgram();
-    gl.attachShader(program, vert);
-    gl.attachShader(program, frag);
-    gl.linkProgram(program);
+    const linesBuffer = new Float32Array(512 * 1024);
+    const linesBufferLength = linesBuffer.length;
+    const sideSize = Math.max(canvas.width, canvas.height);
 
-    var numAttribs = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
-    for (var ii = 0; ii < numAttribs; ++ii) {
-        var attribInfo = gl.getActiveAttrib(program, ii);
-        if (!attribInfo) {
-            break;
-        }
-        console.log(gl.getAttribLocation(program, attribInfo.name), attribInfo.name);
-    }
+    const w = canvas.width;
+    const h = canvas.height;
+    const scaleW = 2 / w;
+    const scaleH = 2 / h;
 
     return {
         render: (buffer: Float32Array) => {
             gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.useProgram(program);
+            gl.useProgram(particlesProgram);
 
             {
-                const uniformLocation = gl.getUniformLocation(program, 'resolution');
-                gl.uniform2f(uniformLocation, canvas.width, canvas.height);
+                const uniformLocation = gl.getUniformLocation(particlesProgram, 'resolution');
+                gl.uniform2f(uniformLocation, w, h);
             }
 
             {
-                const attribLocation = gl.getAttribLocation(program, 'scale');
+                const attribLocation = gl.getAttribLocation(particlesProgram, 'scale');
                 gl.disableVertexAttribArray(attribLocation);
-                gl.vertexAttrib2f(attribLocation, 2 / canvas.width, 2 / canvas.height);
+                gl.vertexAttrib2f(attribLocation, scaleW, scaleH);
             }
 
             {
-                const attribLocation = gl.getAttribLocation(program, 'coord');
+                const attribLocation = gl.getAttribLocation(particlesProgram, 'velocity');
+                gl.enableVertexAttribArray(attribLocation);
+                gl.vertexAttribPointer(
+                    attribLocation, // index of attr
+                    2, // pick two values X and Y
+                    gl.FLOAT, // f32
+                    false, // normalized
+                    16, // stride (step in bytes)
+                    // dx, dy
+                    8, // start
+                );
+            }
+
+            {
+                const attribLocation = gl.getAttribLocation(particlesProgram, 'coord');
                 gl.enableVertexAttribArray(attribLocation);
                 gl.vertexAttribPointer(
                     attribLocation, // index of attr
@@ -195,27 +171,57 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
 
             gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.DYNAMIC_DRAW);
             gl.drawArrays(gl.POINTS, 0, pointsCount);
+
+            // draw grid
+            gl.useProgram(gridProgram);
+
+            {
+                const attribLocation = gl.getAttribLocation(gridProgram, 'scale');
+                gl.disableVertexAttribArray(attribLocation);
+                gl.vertexAttrib2f(attribLocation, scaleW, scaleH);
+            }
+
+            {
+                const attribLocation = gl.getAttribLocation(gridProgram, 'coord');
+                gl.enableVertexAttribArray(attribLocation);
+                gl.vertexAttribPointer(
+                    attribLocation, // index of attr
+                    2, // pick two values X and Y
+                    gl.FLOAT, // f32
+                    false, // normalized
+                    8, // stride (step in bytes)
+                    0, // start
+                );
+            }
+
+            const halfSideSize = sideSize * 0.5;
+            const qt = new QuadTree(new AABB({ x: 0, y: 0 }, { w: halfSideSize, h: halfSideSize }));
+            // measurer.measure();
+            for (let i = 0; i + 4 < buffer.length; i += 4) {
+                qt.insert(new Point(buffer[i], buffer[i + 1]));
+            }
+            // measurer.measureEnd();
+
+            let offset = 0;
+            let getOffset = () => offset;
+            let setOffset = (v: number) => { offset = v };
+
+            linesBuffer.fill(0, 0, linesBufferLength);
+            qt.renderNodes(linesBuffer, linesBufferLength, getOffset, setOffset);
+
+
+            gl.bufferData(
+                gl.ARRAY_BUFFER,
+                linesBuffer,
+                gl.DYNAMIC_DRAW
+            );
+            gl.drawArrays(gl.LINES, 0, Math.floor(linesBufferLength / 2)); // 2 it's coord num (x, y)
         },
+
         resize: (width: number, height: number) => {
             canvas.width = width;
             canvas.height = height;
             gl.viewport(0, 0, width, height);
         }
     }
-}
-
-type Flavour = WebGLRenderingContextBase['VERTEX_SHADER'] | WebGLRenderingContextBase['FRAGMENT_SHADER'];
-async function getShader(name: string, gl: WebGLRenderingContext, flavour: Flavour): Promise<WebGLShader> {
-    const source = (await import(`./shaders/${name}`)).default;
-
-    const shader = gl.createShader(flavour);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader)
-
-    console.groupCollapsed(name);
-    console.log(source);
-    console.log(gl.getShaderInfoLog(shader));
-    console.groupEnd();
-
-    return shader;
 }

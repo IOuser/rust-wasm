@@ -22,6 +22,7 @@ pub struct AABBDimensions {
 }
 
 #[wasm_bindgen]
+#[derive(Clone, Copy)]
 pub struct AABB {
     pub dimensions: AABBDimensions,
     pub center: Point,
