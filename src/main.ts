@@ -1,10 +1,11 @@
 import { QuadTree } from './utils/quad-tree';
 import { AABB } from './utils/aabb';
-import { Point } from './utils/point';
+// import { Point, IPoint } from './utils/point';
 import { getProgram } from './utils/shader';
+import { Coord } from './utils/types';
 
-// import Worker from 'worker-loader!./worker/worker';
-// const worker = new Worker();
+import Worker from 'worker-loader!./worker/shared-memory';
+const worker = new Worker();
 // worker.addEventListener("message", (event) => {
 //     console.log('from worker: ', event.data);
 // });
@@ -16,8 +17,8 @@ import { getProgram } from './utils/shader';
 const pointsCount = 10000;
 
 (async () => {
-    const { init } = await import('./lib');
-    const { memory, ParticlesBox } = await init();
+    // const { init } = await import('./lib');
+    // const { memory, ParticlesBox } = await init();
 
 
     let frameId = null;
@@ -43,19 +44,26 @@ const pointsCount = 10000;
 
         console.log(x, y);
 
-        particlesBox.trigger(x, -y)
+        // particlesBox.trigger(x, -y)
     })
 
 
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    const particlesBox = ParticlesBox.new(w, h, pointsCount);
-    particlesBox.tick(0);
+    // const particlesBox = ParticlesBox.new(w, h, pointsCount);
+    // particlesBox.tick(0);
+
+    const sharedBuffer = new SharedArrayBuffer(Math.floor(pointsCount * 4 * 4))
+
+    worker.postMessage({ sharedBuffer, pointsCount, width: w, height: h });
 
     // convert raw pointer to Float32Array;
-    const pointsPtr = particlesBox.particles();
-    const cells = new Float32Array(memory.buffer, pointsPtr, Math.floor(pointsCount * 4));
+    // const pointsPtr = particlesBox.particles();
+    // const cells = new Float32Array(memory.buffer, pointsPtr, Math.floor(pointsCount * 4));
+
+    const cells = new Float32Array(sharedBuffer, 0, Math.floor(pointsCount * 4));
+    console.log(cells.length, cells.byteLength)
 
     const canvas = document.querySelector<HTMLCanvasElement>('canvas');
     console.assert(canvas !== null);
@@ -75,7 +83,7 @@ const pointsCount = 10000;
             dt = 64;
         }
 
-        particlesBox.tick(dt);
+        // particlesBox.tick(dt);
         lastT = t;
 
         v.render(cells);
@@ -85,7 +93,8 @@ const pointsCount = 10000;
 
     frameId = requestAnimationFrame(renderLoop);
 
-    particlesBox.trigger(0, 0);
+    // particlesBox.tick(0)
+    // particlesBox.trigger(0, 0);
 })();
 
 interface View {
@@ -169,6 +178,8 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
                 );
             }
 
+            // console.log(buffer);
+
             gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.DYNAMIC_DRAW);
             gl.drawArrays(gl.POINTS, 0, pointsCount);
 
@@ -195,11 +206,11 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
             }
 
             const halfSideSize = sideSize * 0.5;
-            const qt = new QuadTree(new AABB({ x: 0, y: 0 }, { w: halfSideSize, h: halfSideSize }));
+            const qt = new QuadTree<Coord & { i: number }>(new AABB({ x: 0, y: 0 }, { w: halfSideSize, h: halfSideSize }));
             // measurer.measure();
-            for (let i = 0; i + 4 < buffer.length; i += 4) {
-                qt.insert(new Point(buffer[i], buffer[i + 1]));
-            }
+            // for (let i = 0; i + 4 < buffer.length; i += 4) {
+            //     qt.insert({ i, x: buffer[i], y: buffer[i + 1] });
+            // }
             // measurer.measureEnd();
 
             let offset = 0;
@@ -209,6 +220,30 @@ async function initView(canvas: HTMLCanvasElement): Promise<View> {
             linesBuffer.fill(0, 0, linesBufferLength);
             qt.renderNodes(linesBuffer, linesBufferLength, getOffset, setOffset);
 
+            // modification
+            // qt.traverse((items: (Coord & { i: number })[]) => {
+            //     const l = items.length;
+            //     for (let j = 0; j < l; j++) {
+            //         const i1 = items[j];
+            //         for(let k = 0; k < l; k++) {
+            //             if (j === k) {
+            //                 continue;
+            //             }
+
+            //             const i2 = items[k];
+
+            //             if (Math.sqrt((i2.x - i1.x) ** 2 + (i2.y - i1.y) ** 2) < 10) {
+            //                 const amp = Math.sqrt(Math.random() * 0.3 + 0.1) * 0.5 - 0.3;
+            //                 const vec = Math.random() * 2.0 * 3.14;
+            //                 buffer[i1.i + 2] += Math.sin(vec) * amp * 0.02; // dx
+            //                 buffer[i1.i + 3] += Math.cos(vec) * amp * 0.02; // dy
+
+            //                 buffer[i2.i + 2] += Math.sin(vec + 3.14) * amp * 0.02; // dx
+            //                 buffer[i2.i + 3] += Math.cos(vec + 3.14) * amp * 0.02; // dy
+            //             }
+            //         }
+            //     }
+            // });
 
             gl.bufferData(
                 gl.ARRAY_BUFFER,

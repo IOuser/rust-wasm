@@ -9,3 +9,4 @@ ctx.postMessage({ foo: "foo" });
 (async () => {
     ctx.postMessage({ foo: "bar" });
 })();
+
