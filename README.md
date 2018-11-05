@@ -29,3 +29,4 @@ $ yarn start
 ##### TODO:
 - QuadTree (Point, AABB) rust impl
 - Circles colliding
+- WASM threads (https://developers.google.com/web/updates/2018/10/wasm-threads)
