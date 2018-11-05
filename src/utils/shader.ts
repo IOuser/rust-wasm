@@ -1,8 +1,8 @@
 type Flavour = WebGLRenderingContextBase['VERTEX_SHADER'] | WebGLRenderingContextBase['FRAGMENT_SHADER'];
-type ShaderDescriptor = [string, Flavour];
+type ShaderDescriptor = [Flavour, string];
 
 export async function getProgram(gl: WebGLRenderingContext, name: string, descriptors: ShaderDescriptor[]): Promise<WebGLProgram> {
-    const shaders = await Promise.all(descriptors.map((descriptor: ShaderDescriptor) => getShader(gl, ...descriptor)))
+    const shaders = await Promise.all(descriptors.map((descriptor: ShaderDescriptor) => compileShader(gl, name, ...descriptor)))
 
     const program = gl.createProgram();
     for (const shader of shaders) {
@@ -40,9 +40,7 @@ export async function getProgram(gl: WebGLRenderingContext, name: string, descri
     return program;
 }
 
-async function getShader(gl: WebGLRenderingContext, name: string, flavour: Flavour): Promise<WebGLShader> {
-    const source = (await import(`../shaders/${name}`)).default;
-
+function compileShader(gl: WebGLRenderingContext, name: string, flavour: Flavour, source: string): WebGLShader {
     const shader = gl.createShader(flavour);
     gl.shaderSource(shader, source);
     gl.compileShader(shader)

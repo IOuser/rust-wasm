@@ -1,18 +1,18 @@
-import { IPoint } from './point';
 import { IAABB, AABBSide } from './aabb';
+import { Coord } from './types';
 
 const enum Constants {
     NodeCapacity = 8,
 }
 
-export class QuadTree {
+export class QuadTree<T extends Coord> {
     private _boundary: IAABB;
-    private _points: IPoint[] = [];
+    private _items: T[] = [];
 
-    private _nw: QuadTree | null = null;
-    private _ne: QuadTree | null = null;
-    private _sw: QuadTree | null = null;
-    private _se: QuadTree | null = null;
+    private _nw: QuadTree<T> | null = null;
+    private _ne: QuadTree<T> | null = null;
+    private _sw: QuadTree<T> | null = null;
+    private _se: QuadTree<T> | null = null;
 
     public constructor(boundary: IAABB) {
         this._boundary = boundary;
@@ -69,22 +69,22 @@ export class QuadTree {
     }
 
     public reset(): void {
-        this._points = [];
+        this._items = [];
         this._nw = null;
         this._ne = null;
         this._sw = null;
         this._se = null;
     }
 
-    public insert(point: IPoint): boolean {
-        if (!this._boundary.contains(point)) {
+    public insert(item: T): boolean {
+        if (!this._boundary.contains(item)) {
             return false;
         }
 
-        const points = this._points;
+        const items = this._items;
 
-        if (points.length < Constants.NodeCapacity) {
-            points.push(point);
+        if (items.length < Constants.NodeCapacity) {
+            items.push(item);
             return true;
         }
 
@@ -100,17 +100,17 @@ export class QuadTree {
             this._se = new QuadTree(this._boundary.subdivide(AABBSide.SE));
         }
 
-        while (points.length) {
-            const currentPoint = points.shift();
-            if (currentPoint === undefined) {
+        while (true) {
+            const tempItem = items.shift();
+            if (tempItem === undefined) {
                 break;
             }
 
             if (
-                this._nw.insert(currentPoint) ||
-                this._ne.insert(currentPoint) ||
-                this._sw.insert(currentPoint) ||
-                this._se.insert(currentPoint)
+                this._nw.insert(tempItem) ||
+                this._ne.insert(tempItem) ||
+                this._sw.insert(tempItem) ||
+                this._se.insert(tempItem)
             ) {
                 continue;
             }
@@ -119,11 +119,26 @@ export class QuadTree {
         }
 
         return (
-            this._nw.insert(point) ||
-            this._ne.insert(point) ||
-            this._sw.insert(point) ||
-            this._se.insert(point)
+            this._nw.insert(item) ||
+            this._ne.insert(item) ||
+            this._sw.insert(item) ||
+            this._se.insert(item)
         );
+    }
+
+    public traverse(callback: (items: T[]) => void): void {
+        if (this._items.length > 0) {
+            callback(this._items);
+        }
+
+        if (this._nw === null) {
+            return;
+        }
+
+        this._nw!.traverse(callback);
+        this._ne!.traverse(callback);
+        this._sw!.traverse(callback);
+        this._se!.traverse(callback);
     }
 
     // public queryRange(range: IAABB): IPoint[] {

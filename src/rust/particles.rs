@@ -104,6 +104,7 @@ impl ParticlesBox {
         //     ).min(20.0))
         // );
 
+        let amp = ((random() * 0.3 + 0.1).sqrt() * 0.5 - 0.3) * 0.003 * dt;
         for i in 0..len {
             let p = &mut self.particles[i];
             p.x += p.dx * dt;
@@ -113,7 +114,7 @@ impl ParticlesBox {
                 p.dx = p.dx.abs();
             }
 
-            if p.x > sub_width as f32 {
+            if p.x > sub_width {
                 p.dx = -p.dx.abs();
             }
 
@@ -121,7 +122,7 @@ impl ParticlesBox {
                 p.dy = p.dy.abs();
             }
 
-            if p.y > sub_height as f32 {
+            if p.y > sub_height {
                 p.dy = -p.dy.abs();
             }
 
@@ -131,10 +132,9 @@ impl ParticlesBox {
 
 
             // https://www.wolframalpha.com/input/?i=plot+sqrt(x+*+0.4+%2B+0.1))+*+0.5,++0+%3C+x+%3C+1
-            let amp = (random() * 0.3 + 0.1).sqrt() * 0.5 - 0.3;
-            let vec = random() * 2.0 * 3.14;
-            p.dx += vec.sin() * amp * 0.003 * dt;
-            p.dy += vec.cos() * amp * 0.003 * dt;
+            let vec = random() * 6.28;
+            p.dx += vec.sin() * amp;
+            p.dy += vec.cos() * amp;
 
 
             // p.dy -= 0.0001 * dt;
