@@ -1,12 +1,14 @@
 import { initRenderEvent, InitRenderData } from "./events";
 import { getProgram } from '../../utils/shader';
+import { ISegment, Segment } from '../../utils/segment';
+import { IPoint, Point } from '../../utils/point';
 
 self.addEventListener('message', function (event) {
     const { data: { type, data } } = event;
 
     console.assert(type);
 
-    switch(type) {
+    switch (type) {
         case initRenderEvent.toString():
             return initEventHandler(data);
     }
@@ -70,19 +72,33 @@ async function initView(canvas: HTMLCanvasElement, pointsCount: number, shaders:
         [gl.FRAGMENT_SHADER, shaders.particlesFragment],
     ])
     const gridProgram = await getProgram(gl, 'grid shader', [
-        [gl.VERTEX_SHADER, shaders.gridVertex],
-        [gl.FRAGMENT_SHADER, shaders.gridFragment],
+        [gl.VERTEX_SHADER, shaders.colorVertex],
+        [gl.FRAGMENT_SHADER, shaders.colorFragment],
     ])
-
-
-    const linesBuffer = new Float32Array(512 * 1024);
-    const linesBufferLength = linesBuffer.length;
-    // const sideSize = Math.max(canvas.width, canvas.height);
+    const triangesProgram = await getProgram(gl, ' trianges shader', [
+        [gl.VERTEX_SHADER, shaders.colorVertex],
+        [gl.FRAGMENT_SHADER, shaders.colorFragment],
+    ])
 
     const w = canvas.width;
     const h = canvas.height;
     const scaleW = 2 / w;
     const scaleH = 2 / h;
+
+    // squares vertecies
+    const square = [
+        0, 0, 100, 0,
+        100, 0, 100, 100,
+        100, 100, 0, 100,
+        0, 100, 0, 0,
+    ];
+
+    // linesBuffer.fill(0, 0, linesBufferLength);
+    const squareBuffer = new Float32Array([
+        ...square.map((v, i) => i % 2 === 0 ? v - 120 : v + 50),
+        ...square.map((v, i) => i % 2 === 0 ? v - 150 : v - 200)
+    ])
+    const squareBufferLength = squareBuffer.length;
 
     return {
         render: (buffer: Float32Array) => {
@@ -127,16 +143,66 @@ async function initView(canvas: HTMLCanvasElement, pointsCount: number, shaders:
                 );
             }
 
-            // console.log(buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.DYNAMIC_DRAW);
+            gl.drawArrays(gl.LINES, 0, pointsCount);
 
-            // console.log(buffer);
+            const trianges = [
+                0, 0,
+                200, 0,
+                200, 100,
+                // 100, 100, 0, 100,
+                // 0, 100, 0, 0,
+            ];
+            const segments: ISegment[] = [];
+            const points: IPoint[] = [];
+            for (let i = 0; i < squareBufferLength; i += 4) {
+                const x1 = squareBuffer[i];
+                const y1 = squareBuffer[i + 1];
+                const x2 = squareBuffer[i + 2];
+                const y2 = squareBuffer[i + 3];
+
+                const p1 = new Point(x1, y1);
+                const p2 = new Point(x2, y2);
+
+                points.push(p1, p2);
+                segments.push(new Segment(p1, p2));
+            }
+
+            // sort points
+            points.sort((a: IPoint, b: IPoint) => a.getPhi() - b.getPhi());
+
+            console.log(segments, points);
             // debugger;
 
-            gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.DYNAMIC_DRAW);
-            gl.drawArrays(gl.POINTS, 0, pointsCount);
+            // draw lights
+            // var endpoints: [number, number][] = []; // list of endpoints, sorted by angle
+            // var open = []; // list of walls the sweep line intersects
 
-            // draw grid
+
+            // console.log((endpoints as any).flat())
+            // debugger;
+
+            for (let i = 0; i < points.length; i++) {
+                const p = points[i];
+            }
+            // loop over endpoints:
+            //     remember which wall is nearest
+            //     add any walls that BEGIN at this endpoint to 'walls'
+            //     remove any walls that END at this endpoint from 'walls'
+
+            //     figure out which wall is now nearest
+            //     if the nearest wall changed:
+            //         fill the current triangle and begin a new one
+
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            // draw squares
             gl.useProgram(gridProgram);
+
+            {
+                const uniformLocation = gl.getUniformLocation(gridProgram, 'color');
+                gl.uniform3f(uniformLocation, 0, 1, 0);
+            }
 
             {
                 const attribLocation = gl.getAttribLocation(gridProgram, 'scale');
@@ -157,52 +223,50 @@ async function initView(canvas: HTMLCanvasElement, pointsCount: number, shaders:
                 );
             }
 
-            // const halfSideSize = sideSize * 0.5;
-            // const qt = new QuadTree<Coord & { i: number }>(new AABB({ x: 0, y: 0 }, { w: halfSideSize, h: halfSideSize }));
-            // measurer.measure();
-            // for (let i = 0; i + 4 < buffer.length; i += 4) {
-            //     qt.insert({ i, x: buffer[i], y: buffer[i + 1] });
-            // }
-            // measurer.measureEnd();
-
-            // let offset = 0;
-            // let getOffset = () => offset;
-            // let setOffset = (v: number) => { offset = v };
-
-            linesBuffer.fill(0, 0, linesBufferLength);
-            // qt.renderNodes(linesBuffer, linesBufferLength, getOffset, setOffset);
-
-            // modification
-            // qt.traverse((items: (Coord & { i: number })[]) => {
-            //     const l = items.length;
-            //     for (let j = 0; j < l; j++) {
-            //         const i1 = items[j];
-            //         for(let k = 0; k < l; k++) {
-            //             if (j === k) {
-            //                 continue;
-            //             }
-
-            //             const i2 = items[k];
-
-            //             if (Math.sqrt((i2.x - i1.x) ** 2 + (i2.y - i1.y) ** 2) < 10) {
-            //                 const amp = Math.sqrt(Math.random() * 0.3 + 0.1) * 0.5 - 0.3;
-            //                 const vec = Math.random() * 2.0 * 3.14;
-            //                 buffer[i1.i + 2] += Math.sin(vec) * amp * 0.02; // dx
-            //                 buffer[i1.i + 3] += Math.cos(vec) * amp * 0.02; // dy
-
-            //                 buffer[i2.i + 2] += Math.sin(vec + 3.14) * amp * 0.02; // dx
-            //                 buffer[i2.i + 3] += Math.cos(vec + 3.14) * amp * 0.02; // dy
-            //             }
-            //         }
-            //     }
-            // });
-
             gl.bufferData(
                 gl.ARRAY_BUFFER,
-                linesBuffer,
+                squareBuffer,
                 gl.DYNAMIC_DRAW
             );
-            gl.drawArrays(gl.LINES, 0, Math.floor(linesBufferLength / 2)); // 2 it's coord num (x, y)
+            gl.drawArrays(gl.LINES, 0, Math.floor(squareBufferLength / 2)); // 2 it's coord num (x, y)
+
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            // draw triangles
+            gl.useProgram(triangesProgram);
+
+            {
+                const uniformLocation = gl.getUniformLocation(triangesProgram, 'color');
+                gl.uniform3f(uniformLocation, 1, 0, 0);
+            }
+
+            {
+                const attribLocation = gl.getAttribLocation(triangesProgram, 'scale');
+                gl.disableVertexAttribArray(attribLocation);
+                gl.vertexAttrib2f(attribLocation, scaleW, scaleH);
+            }
+
+            {
+                const attribLocation = gl.getAttribLocation(triangesProgram, 'coord');
+                gl.enableVertexAttribArray(attribLocation);
+                gl.vertexAttribPointer(
+                    attribLocation, // index of attr
+                    2, // pick two values X and Y
+                    gl.FLOAT, // f32
+                    false, // normalized
+                    8, // stride (step in bytes)
+                    0, // start
+                );
+            }
+
+            const trianglesBuffer = new Float32Array(trianges);
+            gl.bufferData(
+                gl.ARRAY_BUFFER,
+                trianglesBuffer,
+                gl.DYNAMIC_DRAW
+            );
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, Math.floor(trianglesBuffer.length / 2)); // 2 it's coord num (x, y)
+
         },
 
         resize: (width: number, height: number) => {

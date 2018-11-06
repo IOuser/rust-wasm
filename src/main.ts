@@ -13,7 +13,7 @@ const stateWorker = new StateWorker();
 const renderWorker = new RenderWorker();
 
 
-const pointsCount = 15000;
+const pointsCount = 0;
 
 (async () => {
     // const { init } = await import('./lib');
@@ -62,11 +62,11 @@ const pointsCount = 15000;
     })
 
     const getShaderSource = async (name: string) => (await import(`./shaders/${name}`)).default;
-    const [pV, pF, gV, gF] = await Promise.all([
+    const [pV, pF, cV, cF] = await Promise.all([
         getShaderSource('particles.v.glsl'),
         getShaderSource('particles.f.glsl'),
-        getShaderSource('grid.v.glsl'),
-        getShaderSource('grid.f.glsl'),
+        getShaderSource('color.v.glsl'),
+        getShaderSource('color.f.glsl'),
     ])
 
     renderWorker.postMessage(initRenderEvent({
@@ -76,8 +76,8 @@ const pointsCount = 15000;
         shaders: {
             particlesVertex: pV,
             particlesFragment: pF,
-            gridVertex: gV,
-            gridFragment: gF,
+            colorVertex: cV,
+            colorFragment: cF,
         }
     }), [offscreen]);
 })();
