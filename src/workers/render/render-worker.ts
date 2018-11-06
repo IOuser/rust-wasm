@@ -1,5 +1,5 @@
 import { initRenderEvent, InitRenderData } from "./events";
-import { getProgram } from '../utils/shader';
+import { getProgram } from '../../utils/shader';
 
 self.addEventListener('message', function (event) {
     const { data: { type, data } } = event;

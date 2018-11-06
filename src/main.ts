@@ -4,21 +4,16 @@
 // import { getProgram } from './utils/shader';
 // import { Coord } from './utils/types';
 
-import StateWorker from 'worker-loader?name=state-worker.[hash:5].js!./worker/state-worker';
-import RenderWorker from 'worker-loader?name=render-worker.[hash:5].js!./worker/render-worker';
-import { initStateEvent, initRenderEvent } from './worker/events';
+import StateWorker from 'worker-loader?name=state-worker.[hash:5].js!./workers/state/state-worker';
+import { initStateEvent, triggerEvent } from './workers/state/events';
+import RenderWorker from 'worker-loader?name=render-worker.[hash:5].js!./workers/render/render-worker';
+import { initRenderEvent } from './workers/render/events';
 
 const stateWorker = new StateWorker();
 const renderWorker = new RenderWorker();
-// worker.addEventListener("message", (event) => {
-//     console.log('from worker: ', event.data);
-// });
 
-// setTimeout(() => {
-//     worker.postMessage({ foo: 1 });
-// }, 1000);
 
-const pointsCount = 100000;
+const pointsCount = 15000;
 
 (async () => {
     // const { init } = await import('./lib');
@@ -40,17 +35,6 @@ const pointsCount = 100000;
     //     }
     // });
 
-    // window.addEventListener('click', (e: MouseEvent) => {
-    //     const { left, top } = canvas.getBoundingClientRect()
-
-    //     const x = e.clientX - left - canvas.width / 2;
-    //     const y = e.clientY - top - canvas.height / 2;
-
-    //     console.log(x, y);
-
-    //     // particlesBox.trigger(x, -y)
-    // })
-
     const buffer = new SharedArrayBuffer(Math.floor(pointsCount * 4 * 4))
 
     const canvas = document.querySelector<HTMLCanvasElement>('canvas');
@@ -67,14 +51,23 @@ const pointsCount = 100000;
         height: canvas.height,
     }));
 
+    window.addEventListener('click', (e: MouseEvent) => {
+        const { left, top } = canvas.getBoundingClientRect()
+
+        const x = e.clientX - left - canvas.width / 2;
+        const y = e.clientY - top - canvas.height / 2;
+
+        console.log(x, y);
+        stateWorker.postMessage(triggerEvent({ x, y: -y }));
+    })
+
+    const getShaderSource = async (name: string) => (await import(`./shaders/${name}`)).default;
     const [pV, pF, gV, gF] = await Promise.all([
         getShaderSource('particles.v.glsl'),
         getShaderSource('particles.f.glsl'),
         getShaderSource('grid.v.glsl'),
         getShaderSource('grid.f.glsl'),
     ])
-
-    // console.log(pV)
 
     renderWorker.postMessage(initRenderEvent({
         pointsCount,
@@ -87,18 +80,4 @@ const pointsCount = 100000;
             gridFragment: gF,
         }
     }), [offscreen]);
-
-    // console.log(offscreen);
-    return;
-
-
-
-    // particlesBox.tick(0)
-    // particlesBox.trigger(0, 0);
 })();
-
-
-async function getShaderSource(name: string): Promise<string> {
-    const source = (await import(`./shaders/${name}`)).default;
-    return source;
-}
