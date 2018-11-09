@@ -16,3 +16,14 @@ export const initRenderEvent = (data: InitRenderData): WorkerEvent<InitRenderDat
 
 initRenderEvent.toString = () => 'init-render';
 
+export type SetLightLocationData = {
+    x: number;
+    y: number;
+}
+
+export const setLightLocationEvent = (data: SetLightLocationData): WorkerEvent<SetLightLocationData> => ({
+    type: 'set-light-location',
+    data,
+});
+
+setLightLocationEvent.toString = () => 'set-light-location';

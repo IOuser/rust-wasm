@@ -7,7 +7,7 @@
 import StateWorker from 'worker-loader?name=state-worker.[hash:5].js!./workers/state/state-worker';
 import { initStateEvent, triggerEvent } from './workers/state/events';
 import RenderWorker from 'worker-loader?name=render-worker.[hash:5].js!./workers/render/render-worker';
-import { initRenderEvent } from './workers/render/events';
+import { initRenderEvent, setLightLocationEvent } from './workers/render/events';
 
 const stateWorker = new StateWorker();
 const renderWorker = new RenderWorker();
@@ -59,14 +59,26 @@ const pointsCount = 0;
 
         console.log(x, y);
         stateWorker.postMessage(triggerEvent({ x, y: -y }));
+        // renderWorker.postMessage(setLightLocationEvent({ x, y: -y }));
+    })
+
+    window.addEventListener('mousemove', (e: MouseEvent) => {
+        const { left, top } = canvas.getBoundingClientRect()
+
+        const x = e.clientX - left - canvas.width / 2;
+        const y = e.clientY - top - canvas.height / 2;
+
+        renderWorker.postMessage(setLightLocationEvent({ x, y: -y }));
     })
 
     const getShaderSource = async (name: string) => (await import(`./shaders/${name}`)).default;
-    const [pV, pF, cV, cF] = await Promise.all([
+    const [pV, pF, cV, cF, lV, lF] = await Promise.all([
         getShaderSource('particles.v.glsl'),
         getShaderSource('particles.f.glsl'),
         getShaderSource('color.v.glsl'),
         getShaderSource('color.f.glsl'),
+        getShaderSource('light.v.glsl'),
+        getShaderSource('light.f.glsl'),
     ])
 
     renderWorker.postMessage(initRenderEvent({
@@ -78,6 +90,8 @@ const pointsCount = 0;
             particlesFragment: pF,
             colorVertex: cV,
             colorFragment: cF,
+            lightVertex: lV,
+            lightFragment: lF,
         }
     }), [offscreen]);
 })();
