@@ -6,7 +6,6 @@
     "license": "MIT",
     "devDependencies": {
         "@types/node": "13.5.0",
-        "@types/webassembly-js-api": "0.0.2",
         "raw-loader": "4.0.0",
         "rust-native-wasm-loader": "0.8.1",
         "ts-loader": "6.2.1",
