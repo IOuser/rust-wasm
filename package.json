@@ -5,17 +5,17 @@
     "author": "Igor Emets <ya.peren@yandex.ru>",
     "license": "MIT",
     "devDependencies": {
-        "@types/node": "10.12.18",
+        "@types/node": "13.5.0",
         "@types/webassembly-js-api": "0.0.2",
-        "raw-loader": "1.0.0",
+        "raw-loader": "4.0.0",
         "rust-native-wasm-loader": "0.8.1",
-        "ts-loader": "5.3.3",
-        "typescript": "3.2.2",
-        "webpack": "4.28.1",
-        "webpack-cli": "3.2.1",
-        "webpack-dev-server": "3.1.14",
+        "ts-loader": "6.2.1",
+        "typescript": "3.7.5",
+        "webpack": "4.41.5",
+        "webpack-cli": "3.3.10",
+        "webpack-dev-server": "3.10.1",
         "worker-loader": "2.0.0",
-        "write-assets-webpack-plugin": "1.0.4"
+        "write-assets-webpack-plugin": "1.0.5"
     },
     "scripts": {
         "start": "webpack-dev-server --progress",
@@ -23,6 +23,6 @@
         "setup": "rustup default nightly && rustup update nightly && rustup target add wasm32-unknown-unknown --toolchain nightly && cargo install --force --git https://github.com/alexcrichton/wasm-gc && cargo +nightly install --force wasm-bindgen-cli"
     },
     "dependencies": {
-        "tslib": "1.9.3"
+        "tslib": "1.10.0"
     }
 }

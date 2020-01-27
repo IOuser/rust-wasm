@@ -1,9 +1,16 @@
 {
     "compilerOptions": {
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "allowSyntheticDefaultImports": true,
+        "noEmitHelpers": true,
+        "importHelpers": true,
+        "downlevelIteration": true,
         "target": "es5",
         "module": "esnext",
         "sourceMap": true,
-        "importHelpers": true,
         "moduleResolution": "node",
         "lib": [
             "dom",
