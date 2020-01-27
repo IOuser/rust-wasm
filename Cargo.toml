@@ -3,6 +3,7 @@ name = "rust-wasm-tests"
 version = "0.0.1"
 authors = ["Ihor Yemets <ya.peren@yandex.ru>"]
 publish = false
+rust = "1.30"
 
 [lib]
 crate-type = ["cdylib"]
