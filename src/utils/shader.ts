@@ -1,3 +1,5 @@
+import { assert } from './assert';
+
 type Flavour = WebGLRenderingContextBase['VERTEX_SHADER'] | WebGLRenderingContextBase['FRAGMENT_SHADER'];
 type ShaderDescriptor = [string, Flavour];
 
@@ -5,6 +7,8 @@ export async function getProgram(gl: WebGLRenderingContext, name: string, descri
     const shaders = await Promise.all(descriptors.map((descriptor: ShaderDescriptor) => getShader(gl, ...descriptor)))
 
     const program = gl.createProgram();
+    assert(program !== null, 'program is not WebGLProgram');
+
     for (const shader of shaders) {
         gl.attachShader(program, shader);
     }
@@ -44,6 +48,8 @@ async function getShader(gl: WebGLRenderingContext, name: string, flavour: Flavo
     const source = (await import(`../shaders/${name}`)).default;
 
     const shader = gl.createShader(flavour);
+    assert(shader !== null, 'shader is not WebGLShader');
+
     gl.shaderSource(shader, source);
     gl.compileShader(shader)
 

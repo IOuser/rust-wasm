@@ -1,38 +1,42 @@
-export const measurer = new class {
-    pre: HTMLPreElement = document.querySelector('pre');
-    frames: number[] = [];
-    lastFrameTimeStamp: number = performance.now();
+import { assert } from './assert';
 
-    measure() {
-        this.lastFrameTimeStamp = performance.now();
+export class Measurer {
+    private static _pre: HTMLPreElement | null = document.querySelector('pre');
+    private static _frames: number[] = [];
+    private static _lastFrameTimeStamp: number = performance.now();
+
+    public static measure() {
+        this._lastFrameTimeStamp = performance.now();
     }
 
-    measureEnd() {
+    public static measureEnd() {
         // Convert the delta time since the last frame render into a measure
         // of frames per second.
         const now = performance.now();
-        const delta = now - this.lastFrameTimeStamp;
+        const delta = now - this._lastFrameTimeStamp;
         const fps = delta * 1000;
 
         // Save only the latest 100 timings.
-        this.frames.push(fps);
-        if (this.frames.length > 100) {
-            this.frames.shift();
+        this._frames.push(fps);
+        if (this._frames.length > 100) {
+            this._frames.shift();
         }
 
         // Find the max, min, and mean of our 100 latest timings.
         let min = Infinity;
         let max = -Infinity;
         let sum = 0;
-        for (let i = 0; i < this.frames.length; i++) {
-            sum += this.frames[i];
-            min = Math.min(this.frames[i], min);
-            max = Math.max(this.frames[i], max);
+        for (let i = 0; i < this._frames.length; i++) {
+            sum += this._frames[i];
+            min = Math.min(this._frames[i], min);
+            max = Math.max(this._frames[i], max);
         }
-        let mean = sum / this.frames.length;
+        let mean = sum / this._frames.length;
+
+        assert(this._pre !== null, 'pre is not HTMLPreElement');
 
         // Render the statistics.
-        this.pre.textContent =
+        this._pre.textContent =
 `Measure:
          latest = ${Math.round(fps) / 1000}ms
 avg of last 100 = ${Math.round(mean) / 1000}ms

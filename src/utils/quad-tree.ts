@@ -2,7 +2,7 @@ import { IPoint } from './point';
 import { IAABB, AABBSide } from './aabb';
 
 const enum Constants {
-    NodeCapacity = 8,
+    NodeCapacity = 32,
 }
 
 export class QuadTree {

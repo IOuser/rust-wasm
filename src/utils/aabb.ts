@@ -51,6 +51,8 @@ export class AABB implements IAABB {
                 return new AABB({ x: x - quadW, y: y + quadH }, halfDimension);
             case side === AABBSide.SE:
                 return new AABB({ x: x + quadW, y: y + quadH }, halfDimension);
+            default:
+                throw TypeError('side is not AABBSide');
         }
     }
 

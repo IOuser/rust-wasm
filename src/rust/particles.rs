@@ -42,7 +42,7 @@ pub struct Particle {
 
 impl fmt::Display for Particle {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "particle: ");
+        write!(f, "particle: ")?;
         write!(f, "x: {} ", self.x)?;
         write!(f, "y: {} ", self.y)?;
         write!(f, "dx: {} ", self.dx)?;

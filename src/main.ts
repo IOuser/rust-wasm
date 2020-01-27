@@ -2,6 +2,7 @@ import { QuadTree } from './utils/quad-tree';
 import { AABB } from './utils/aabb';
 import { Point } from './utils/point';
 import { getProgram } from './utils/shader';
+import { assert } from './utils/assert';
 
 // import Worker from 'worker-loader!./worker/worker';
 // const worker = new Worker();
@@ -20,7 +21,23 @@ const pointsCount = 10000;
     const { memory, ParticlesBox } = await init();
 
 
-    let frameId = null;
+    let frameId: number | null = null;
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    const particlesBox = ParticlesBox.new(w, h, pointsCount);
+    particlesBox.tick(0);
+
+    // convert raw pointer to Float32Array;
+    const pointsPtr = particlesBox.particles();
+    const cells = new Float32Array(memory.buffer, pointsPtr, Math.floor(pointsCount * 4));
+
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas');
+    assert(canvas !== null, 'canvas is not HTMLCanvasElement');
+
+    canvas.width = w;
+    canvas.height = h;
 
     window.addEventListener('keyup', (e: KeyboardEvent) => {
         if (e.key !== ' ') {
@@ -46,26 +63,9 @@ const pointsCount = 10000;
         particlesBox.trigger(x, -y)
     })
 
-
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-
-    const particlesBox = ParticlesBox.new(w, h, pointsCount);
-    particlesBox.tick(0);
-
-    // convert raw pointer to Float32Array;
-    const pointsPtr = particlesBox.particles();
-    const cells = new Float32Array(memory.buffer, pointsPtr, Math.floor(pointsCount * 4));
-
-    const canvas = document.querySelector<HTMLCanvasElement>('canvas');
-    console.assert(canvas !== null);
-    canvas.width = w;
-    canvas.height = h;
-
     const v = await initView(canvas);
     console.log(v);
     v.render(cells);
-    // const ctx = canvas.getContext('2d');
 
     let lastT = 0;
     const renderLoop = (t: number) => {
@@ -95,6 +95,7 @@ interface View {
 
 async function initView(canvas: HTMLCanvasElement): Promise<View> {
     const gl = canvas.getContext('webgl', { alpha: false, antialias: true });
+    assert(gl !== null, 'gl is not WebGLRenderingContext');
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
 

@@ -152,7 +152,7 @@ impl QuadTree {
 
 impl fmt::Display for QuadTree {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\n");
+        write!(f, "\n")?;
 
         unsafe {
             write!(f, "points {}\n", self.len())?;
@@ -161,13 +161,13 @@ impl fmt::Display for QuadTree {
                 write!(f, "{}\n", **p)?;
             }
 
-            write!(f, "  {:p}, empty: {}\n", self._nw, self._nw.is_null());
-            write!(f, "  {:p}, empty: {}\n", self._ne, self._ne.is_null());
-            write!(f, "  {:p}, empty: {}\n", self._sw, self._sw.is_null());
-            write!(f, "  {:p}, empty: {}\n", self._se, self._se.is_null());
+            write!(f, "  {:p}, empty: {}\n", self._nw, self._nw.is_null())?;
+            write!(f, "  {:p}, empty: {}\n", self._ne, self._ne.is_null())?;
+            write!(f, "  {:p}, empty: {}\n", self._sw, self._sw.is_null())?;
+            write!(f, "  {:p}, empty: {}\n", self._se, self._se.is_null())?;
 
             if !self._nw.is_null() {
-                write!(f, "{}", (*self._nw).len());
+                write!(f, "{}", (*self._nw).len())?;
             }
         }
 
@@ -175,7 +175,7 @@ impl fmt::Display for QuadTree {
         //     write!(f, "\n\t{}\n", *self._ne);
         // }
 
-        write!(f, "\n");
+        write!(f, "\n")?;
 
         Ok(())
     }
